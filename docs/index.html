@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>Schach-Trainer</title>
+<meta name="description" content="Offline Schach spielen und aus Fehlern lernen">
+<meta name="theme-color" content="#1e1f24">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Schach">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<header>
+  <h1>Schach-Trainer</h1>
+  <span id="level-badge" class="level-badge"></span>
+  <button id="btn-new" class="icon-btn" aria-label="Neue Partie">Neu</button>
+</header>
+<main>
+  <div class="eval" aria-label="Bewertung">
+    <div id="eval-fill" class="eval-fill"></div>
+    <span id="eval-text" class="eval-text">0,0</span>
+  </div>
+  <div class="board-wrap"><div id="board" class="cg-wrap"></div></div>
+  <div id="status" class="status">Lade …</div>
+  <div class="toolbar">
+    <button id="btn-undo" class="secondary">↶ Zurück</button>
+    <button id="btn-hint" class="secondary">💡 Tipp</button>
+  </div>
+  <section id="coach" class="coach" hidden></section>
+  <div id="moves" class="moves"></div>
+  <p class="foot">Funktioniert offline · Engine: Stockfish 18 (GPLv3)</p>
+</main>
+
+<div id="promo" class="promo" hidden>
+  <div class="promo-box">
+    <p>Umwandeln in:</p>
+    <button data-p="q">Dame</button><button data-p="r">Turm</button><button data-p="b">Läufer</button><button data-p="n">Springer</button>
+  </div>
+</div>
+
+<dialog id="new-game">
+  <form method="dialog">
+    <h2>Neue Partie</h2>
+    <fieldset class="seg">
+      <legend>Deine Farbe</legend>
+      <label><input type="radio" name="color" value="w" checked><span>Weiß</span></label>
+      <label><input type="radio" name="color" value="b"><span>Schwarz</span></label>
+      <label><input type="radio" name="color" value="random"><span>Zufall</span></label>
+    </fieldset>
+    <label class="field">
+      <span id="level-name">Stufe 3</span>
+      <input type="range" name="level" min="1" max="7" value="3">
+    </label>
+    <label class="check"><input type="checkbox" name="pause" checked><span>Bei Fehlern anhalten, damit ich zurücknehmen kann</span></label>
+    <div class="dialog-actions">
+      <button value="cancel" class="secondary" formnovalidate>Abbrechen</button>
+      <button value="start" class="primary">Los geht's</button>
+    </div>
+  </form>
+</dialog>
+<script src="app.js"></script>
+</body>
+</html>
