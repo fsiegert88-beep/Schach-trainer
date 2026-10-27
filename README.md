@@ -21,6 +21,13 @@ cd docs && python3 -m http.server 8765
 `docs/` wird direkt über GitHub Pages ausgeliefert. Nach Änderungen an Dateien in
 `docs/` die `VERSION` in `docs/sw.js` erhöhen, damit installierte Apps das Update laden.
 
+## Notation lernen
+
+Über **📖 Notation** gibt es eine Legende der Abkürzungen (K, D, T, L, S, x, +, #, O-O …).
+In der Zuganalyse lassen sich Züge antippen und werden in Klartext erklärt
+(z. B. „Sd6+ = Springer zieht nach d6 und gibt Schach“). Die Lernhilfe lässt sich in der
+Legende ausschalten.
+
 ## Lizenzen
 
 - Stockfish.js 18 (GPLv3), `docs/engine/`
