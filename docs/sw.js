@@ -1,5 +1,5 @@
 // Offline-Cache: alle Dateien werden beim ersten Besuch gespeichert.
-const VERSION = 'v1';
+const VERSION = 'v2';
 const CACHE = `schach-trainer-${VERSION}`;
 const FILES = [
   './',

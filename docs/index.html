@@ -31,6 +31,7 @@
   <div class="toolbar">
     <button id="btn-undo" class="secondary">↶ Zurück</button>
     <button id="btn-hint" class="secondary">💡 Tipp</button>
+    <button id="btn-legend" class="secondary" aria-label="Schachnotation erklärt">📖 Notation</button>
   </div>
   <section id="coach" class="coach" hidden></section>
   <div id="moves" class="moves"></div>
@@ -61,6 +62,16 @@
     <div class="dialog-actions">
       <button value="cancel" class="secondary" formnovalidate>Abbrechen</button>
       <button value="start" class="primary">Los geht's</button>
+    </div>
+  </form>
+</dialog>
+<dialog id="legend">
+  <form method="dialog">
+    <h2>Schachnotation</h2>
+    <div class="legend-body"></div>
+    <label class="check"><input type="checkbox" name="learn" checked><span>Lernhilfe: Züge in der Analyse antippen, um sie in Klartext erklärt zu bekommen</span></label>
+    <div class="dialog-actions">
+      <button value="close" class="primary">Fertig</button>
     </div>
   </form>
 </dialog>

@@ -2,6 +2,7 @@ import { Chess } from 'chess.js';
 import { Chessground } from '@lichess-org/chessground';
 import { Engine, winChance } from './engine.js';
 import { reviewMove, CLASS_INFO, sanDE, uciToMove } from './coach.js';
+import { explainSan, markMoves, PIECES } from './notation.js';
 
 const LEVELS = [
   { name: 'Einsteiger', skill: 0, depth: 1, movetime: 150 },
@@ -28,9 +29,11 @@ const el = {
   newBtn: $('#btn-new'),
   dialog: $('#new-game'),
   promo: $('#promo'),
+  legendBtn: $('#btn-legend'),
+  legend: $('#legend'),
 };
 
-let settings = { color: 'w', level: 3, pause: true };
+let settings = { color: 'w', level: 3, pause: true, learn: true };
 let game = new Chess();
 let records = []; // { san, uci, color, fenBefore, fenAfter, review }
 let userColor = 'w';
@@ -244,7 +247,9 @@ async function playReply(replyP, myGen) {
     finishGame();
     return;
   }
-  setStatus(game.inCheck() ? 'Schach! Du bist am Zug.' : 'Du bist am Zug.');
+  const toMove = game.inCheck() ? 'Schach! Du bist am Zug.' : 'Du bist am Zug.';
+  const ex = settings.learn && explainSan(sanDE(move.san));
+  setStatus(ex ? `Gegner: ${ex.san} – ${ex.sentence} ${toMove}` : toMove);
   startBeforeAnalysis();
 }
 
@@ -318,12 +323,14 @@ function showCoach(rec, { pause = false, onContinue = null, review = false } = {
   el.coach.className = `coach cls-${rv.cls}`;
   const bad = isBad(rv);
   let html = `<div class="coach-head"><span class="badge">${info.icon}</span><span class="title">${sanDE(rec.san)} · ${info.label}</span></div>`;
-  html += `<div class="coach-body">${rv.text.map((t) => `<p>${esc(t)}</p>`).join('')}</div>`;
+  html += ownExplain(sanDE(rec.san));
+  html += `<div class="coach-body">${rv.text.map((t) => `<p>${settings.learn ? markMoves(esc(t), (m) => sanButton(m)) : esc(t)}</p>`).join('')}</div>`;
   if (bad && rv.bestSan) {
-    html += `<div class="coach-lines"><div><span class="lbl good">Besser:</span> ${esc(rv.bestLine.slice(0, 6).join(' '))}</div>`;
-    if (rv.refLine.length) html += `<div><span class="lbl bad">Nach deinem Zug:</span> ${esc(rv.refLine.slice(0, 6).join(' '))}</div>`;
+    html += `<div class="coach-lines"><div><span class="lbl good">Besser:</span> ${lineHtml(rv.bestLine, true)}</div>`;
+    if (rv.refLine.length) html += `<div><span class="lbl bad">Nach deinem Zug:</span> ${lineHtml(rv.refLine, false)}</div>`;
     html += '</div>';
   }
+  if (settings.learn) html += '<div class="explain" hidden></div>';
   html += '<div class="coach-actions">';
   if (bad && rv.bestSan) html += `<button data-act="better" class="secondary">${viewBetter && viewPly !== null ? 'Partiestellung' : 'Besseren Zug zeigen'}</button>`;
   if (pause) {
@@ -366,6 +373,81 @@ function showCoach(rec, { pause = false, onContinue = null, review = false } = {
   });
 }
 
+// ---------- Notations-Lernhilfe ----------
+
+function sanButton(san, who = '') {
+  if (!settings.learn || !explainSan(san)) return esc(san);
+  return `<button type="button" class="san" data-san="${esc(san)}" data-who="${who}">${esc(san)}</button>`;
+}
+
+// Züge einer Variante; userFirst = erster Zug ist deiner (sonst der des Gegners).
+function lineHtml(sans, userFirst) {
+  const list = sans.slice(0, 6);
+  if (!settings.learn) return esc(list.join(' '));
+  return list.map((m, i) => sanButton(m, (i % 2 === 0) === userFirst ? 'Du' : 'Gegner')).join(' ');
+}
+
+function ownExplain(san) {
+  const ex = settings.learn && explainSan(san);
+  return ex ? `<div class="explain-own">${esc(ex.sentence)}</div>` : '';
+}
+
+function explainHtml(ex, who) {
+  const parts = ex.parts
+    .map((p) => `<li><b>${p.text ? esc(p.text) : '–'}</b><span>${esc(p.meaning)}</span></li>`)
+    .join('');
+  return `<div class="explain-sentence"><b>${esc(ex.san)}</b> = ${who ? `${esc(who)}: ` : ''}${esc(ex.sentence)}</div><ul class="explain-parts">${parts}</ul>`;
+}
+
+el.coach.addEventListener('click', (e) => {
+  const b = e.target.closest('button.san');
+  if (!b) return;
+  const box = el.coach.querySelector('.explain');
+  if (!box) return;
+  const open = el.coach.querySelector('button.san.on');
+  open?.classList.remove('on');
+  if (open === b) {
+    box.hidden = true;
+    return;
+  }
+  b.classList.add('on');
+  box.innerHTML = explainHtml(explainSan(b.dataset.san), b.dataset.who);
+  box.hidden = false;
+});
+
+function renderLegend() {
+  const rows = ['K', 'D', 'T', 'L', 'S', '']
+    .map((k) => `<tr><td class="sym">${PIECES[k].symbol}</td><td><b>${k || '–'}</b></td><td>${PIECES[k].name}${k ? '' : ' (kein Buchstabe, nur das Zielfeld)'}</td></tr>`)
+    .join('');
+  const signs = [
+    ['x', 'schlägt'], ['+', 'Schach'], ['#', 'Schachmatt'], ['O-O', 'kurze Rochade'], ['O-O-O', 'lange Rochade'], ['=D', 'Umwandlung (z. B. in eine Dame)'],
+  ].map(([a, b]) => `<tr><td></td><td><b>${a}</b></td><td>${b}</td></tr>`).join('');
+  const examples = ['e4', 'Sf3', 'Lxc6', 'exd5', 'Dh5+', 'Tbd1', 'O-O', 'Dxf7#']
+    .map((m) => `<li><b>${m}</b> – ${esc(explainSan(m).sentence)}</li>`)
+    .join('');
+  el.legend.querySelector('.legend-body').innerHTML = `
+    <table class="legend-table">${rows}${signs}</table>
+    <p class="hint">Felder heißen nach Linie (a–h, von links nach rechts aus Sicht von Weiß) und Reihe (1–8, von Weiß aus gezählt). <b>e4</b> ist also die e-Linie, 4. Reihe. Steht vor dem Zielfeld noch ein Buchstabe oder eine Zahl (z. B. <b>Tbd1</b>), zeigt das, welche von zwei gleichen Figuren zieht.</p>
+    <ul class="legend-examples">${examples}</ul>`;
+}
+
+el.legendBtn.addEventListener('click', () => {
+  renderLegend();
+  el.legend.querySelector('[name="learn"]').checked = settings.learn !== false;
+  el.legend.showModal();
+});
+
+el.legend.querySelector('[name="learn"]').addEventListener('change', (e) => {
+  settings.learn = e.target.checked;
+  save();
+  renderMoves();
+  const shown = viewPly !== null ? records[viewPly] : lastUserRecord();
+  const paused = el.coach.querySelector('[data-act="continue"]');
+  if (!el.coach.hidden && shown?.review && !paused && !el.coach.classList.contains('summary')) {
+    showCoach(shown, { review: viewPly !== null });
+  }
+});
+
 function lastUserRecord() {
   return [...records].reverse().find((r) => r.review);
 }
@@ -402,7 +484,9 @@ function renderMoves() {
     const cls = r.review ? `mv cls-${r.review.cls}` : 'mv';
     const mark = r.review && CLASS_INFO[r.review.cls].icon.includes('?') ? `<sup>${CLASS_INFO[r.review.cls].icon}</sup>` : '';
     const sel = viewPly === i ? ' sel' : '';
-    parts.push(`<button class="${cls}${sel}" data-i="${ply}">${esc(sanDE(r.san))}${mark}</button>`);
+    const ex = settings.learn && explainSan(sanDE(r.san));
+    const tip = ex ? ` title="${esc(ex.sentence)}"` : '';
+    parts.push(`<button class="${cls}${sel}" data-i="${ply}"${tip}>${esc(sanDE(r.san))}${mark}</button>`);
   }
   el.moves.innerHTML = parts.join('') || '<span class="empty">Noch keine Züge.</span>';
   el.moves.scrollLeft = el.moves.scrollWidth;
@@ -422,7 +506,7 @@ el.moves.addEventListener('click', (e) => {
   else if (viewPly !== null) {
     el.coach.hidden = false;
     el.coach.className = 'coach';
-    el.coach.innerHTML = `<div class="coach-head"><span class="title">${esc(sanDE(r.san))} · Zug des Gegners</span></div><div class="coach-actions"><button data-act="live" class="secondary">Zurück zur Partie</button></div>`;
+    el.coach.innerHTML = `<div class="coach-head"><span class="title">${esc(sanDE(r.san))} · Zug des Gegners</span></div>${ownExplain(sanDE(r.san))}<div class="coach-actions"><button data-act="live" class="secondary">Zurück zur Partie</button></div>`;
     el.coach.querySelector('[data-act="live"]').addEventListener('click', () => {
       viewPly = null;
       syncBoard();
@@ -470,7 +554,7 @@ el.dialog.querySelector('form').level.addEventListener('input', updateLevelLabel
 el.dialog.querySelector('form').addEventListener('submit', (e) => {
   const f = e.target;
   if (e.submitter?.value !== 'start') return;
-  settings = { color: f.color.value, level: Number(f.level.value), pause: f.pause.checked };
+  settings = { ...settings, color: f.color.value, level: Number(f.level.value), pause: f.pause.checked };
   newGame();
 });
 
@@ -514,7 +598,7 @@ async function restore() {
     data = JSON.parse(localStorage.getItem(STORE_KEY));
   } catch {}
   if (!data?.settings) return false;
-  settings = data.settings;
+  settings = { learn: true, ...data.settings };
   userColor = data.userColor || 'w';
   game = new Chess();
   records = [];

@@ -125,3 +125,24 @@ legend { color: var(--muted); font-size: 14px; margin-bottom: 6px; }
 .check input { width: 22px; height: 22px; accent-color: var(--accent); flex: none; }
 .dialog-actions { display: flex; gap: 8px; }
 .dialog-actions button { flex: 1; }
+
+/* Notations-Lernhilfe */
+.explain-own { margin-top: 4px; color: var(--muted); font-size: 14px; }
+button.san {
+  font: inherit; min-height: 0; padding: 0 3px; margin: 0 -1px; border-radius: 5px;
+  background: transparent; color: inherit; text-decoration: underline dotted; text-underline-offset: 3px;
+}
+button.san.on { background: var(--panel-2); color: var(--text); text-decoration: none; }
+.explain { margin-top: 10px; padding: 10px 12px; background: var(--panel-2); border-radius: 10px; font-size: 14px; }
+.explain-sentence { color: var(--text); }
+.explain-parts { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 4px; }
+.explain-parts li { display: flex; gap: 10px; align-items: baseline; color: var(--muted); }
+.explain-parts b { min-width: 32px; text-align: center; padding: 1px 6px; border-radius: 6px; background: var(--bg); color: var(--text); }
+.legend-body { display: grid; gap: 10px; max-height: 60vh; overflow-y: auto; -webkit-user-select: text; user-select: text; }
+.legend-table { border-collapse: collapse; font-size: 15px; }
+.legend-table td { padding: 3px 8px 3px 0; }
+.legend-table .sym { font-size: 22px; line-height: 1; width: 28px; }
+.legend-examples { margin: 0; padding-left: 18px; font-size: 14px; color: var(--muted); display: grid; gap: 3px; }
+.legend-examples b { color: var(--text); }
+.legend-body .hint { margin: 0; }
+.legend-table b, .explain-parts b { white-space: nowrap; }
