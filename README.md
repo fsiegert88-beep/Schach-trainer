@@ -8,7 +8,12 @@ erklärt die App auf Deutsch, warum ein anderer Zug besser gewesen wäre.
 
 1. Die Seite einmal in **Safari** öffnen (mit Internet) und warten, bis das Brett erscheint.
 2. Teilen-Symbol → **Zum Home-Bildschirm**.
-3. Ab jetzt die App über das Symbol starten – sie funktioniert komplett offline.
+3. Die App einmal **über das neue Symbol** starten, solange noch Internet da ist
+   (iOS speichert die Offline-Dateien für die Home-Bildschirm-App getrennt von Safari).
+4. Ab jetzt funktioniert sie komplett offline.
+
+Bleibt der Gegner bei „Gegner überlegt …“ hängen, weil iOS die Engine im Hintergrund
+beendet hat, startet die App sie nach ein paar Sekunden automatisch neu.
 
 ## Entwicklung
 
