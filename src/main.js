@@ -187,7 +187,13 @@ async function onUserMove(orig, dest) {
   // Der Gegner rechnet schon parallel.
   const replyP = game.isGameOver() ? null : enginePick(move.after);
 
-  const [before, after] = await Promise.all([beforeP, afterP]);
+  let before, after;
+  try {
+    [before, after] = await Promise.all([beforeP, afterP]);
+  } catch {
+    if (myGen !== gen) return;
+    before = after = { lines: [], bestmove: null };
+  }
   if (myGen !== gen) return;
   rec.review = reviewMove({ fenBefore, move, before, after });
   setEval(rec.review.cpAfterWhite);
@@ -228,7 +234,21 @@ async function playReply(replyP, myGen) {
   busy = true;
   syncBoard();
   setStatus('Gegner überlegt …');
-  const uci = await (replyP || enginePick(game.fen()));
+  let uci = null;
+  try {
+    uci = await (replyP || enginePick(game.fen()));
+  } catch {
+    // Erster Versuch kam aus einer abgestürzten Engine: noch einmal frisch rechnen.
+    try {
+      if (myGen === gen) uci = await enginePick(game.fen());
+    } catch {}
+  }
+  if (myGen === gen && !uci) {
+    busy = false;
+    syncBoard();
+    setStatus('Der Gegner hat keine Antwort gefunden. Tippe auf „Neu“ oder lade die App neu.');
+    return;
+  }
   if (myGen !== gen || !uci) {
     if (myGen === gen) busy = false;
     return;
@@ -568,6 +588,14 @@ el.newBtn.addEventListener('click', openNewGame);
     syncBoard();
   }
 })();
+
+// Nach dem Zurückkehren in die App prüfen, ob die Engines noch leben (iOS beendet sie manchmal).
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible' && player) {
+    player.check();
+    analyser.check();
+  }
+});
 
 if ('serviceWorker' in navigator && location.protocol !== 'file:') {
   navigator.serviceWorker.register('sw.js').catch(() => {});
